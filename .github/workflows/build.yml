@@ -7,21 +7,17 @@ name: Java CI with Gradle
 on:
   workflow_dispatch:
     inputs:
-      shouldrelease:
-          description: Create release
-          type: boolean
-      uploadbuild:
-          description: Upload build
-          type: boolean
-      releasetag:
-        description: Enter the tag name
-        type: string
-      releasetype:
-        description: Make it prerelease
-        type: boolean
-      islatest:
-        description: Mark as latest
-        type: boolean
+      releaseTag:
+        description: Release tag type
+        type: choice
+        options:
+          - RC
+          - Release
+        default: RC
+      releaseTagVersion:
+        description: Release tag version
+        type: number
+        default: 0
   push:
     branches: [ "master" ]
   pull_request:
@@ -32,6 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      RX_VERSION: "Unknown"
+      RX_TAG: ${{ inputs.releaseTag == 'Release' && 2 || inputs.releaseTag == 'RC' && 2 || 0 }}
+      RX_TAG_VERSION: ${{ inputs.releaseTagVersion }}
 
     steps:
     - name: Checkout repo
@@ -77,23 +77,27 @@ jobs:
         KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
         CMAKE_C_COMPILER_LAUNCHER: "ccache"
         CMAKE_CXX_COMPILER_LAUNCHER: "ccache"
-      run: ./gradlew assembleRelease
+      run: |
+        ./gradlew assembleRelease
+        echo RX_VERSION=`cat app/src/main/cpp/.rx.version | awk -F'-' '{print $1}'` >> ${{ github.env }}
+        
 
     - name: Build release artifacts
       uses: actions/upload-artifact@v4
-      if: ${{ github.event_name != 'workflow_dispatch' }} || ${{ inputs.uploadbuild }}
+      if: ${{ github.event_name != 'workflow_dispatch' }}
       with:
         name: rpcsx-build
+        compression-level: 0
         path: |
           app/build/outputs/apk/release/rpcsx-release.apk
 
     - name: Create release
       uses: softprops/action-gh-release@v2
-      if: ${{ inputs.shouldrelease }}
+      if: ${{ github.event_name == 'workflow_dispatch' }} 
       with:
-        prerelease: ${{ inputs.releasetype }}
-        tag_name: ${{ inputs.releasetag }}
-        make_latest: ${{ inputs.islatest }}
+        prerelease: ${{ env.RX_VERSION }}
+        tag_name: v${{ env.RX_VERSION }}${{inputs.releaseTag == 'Release' && ' ' || format('-{0}', inputs.releaseTag)}}${{ inputs.releaseTagVersion == 0 && ' ' || format('-{0}', inputs.releaseTagVersion)}}
+        make_latest: ${{ inputs.releaseTag == 'Release' }}
         # body: 'Some release text body if needed'
         # body_path: or/as/file.md
         files: |

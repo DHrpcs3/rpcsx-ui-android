@@ -92,6 +92,7 @@ class RPCSX {
     external fun supportsCustomDriverLoading() : Boolean
     external fun isInstallableFile(fd: Int) : Boolean
     external fun getDirInstallPath(sfoFd: Int) : String?
+    external fun getVersion()
 //    external fun forceMaxGpuClocks(enable : Boolean)
 
 

@@ -132,6 +132,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC rpcs3/rpcs3)
 target_link_libraries(${CMAKE_PROJECT_NAME}
     rpcs3
     rpcsx::fw::ps3
+    rx
     android
     log
     nativehelper

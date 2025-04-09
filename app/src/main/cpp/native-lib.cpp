@@ -56,6 +56,7 @@
 #include <Emu/System.h>
 #include <rpcsx/fw/ps3/cellSaveData.h>
 #include <rpcsx/fw/ps3/sceNpTrophy.h>
+#include <rx/Version.hpp>
 
 #include <algorithm>
 #include <android/log.h>
@@ -1741,7 +1742,7 @@ Java_net_rpcsx_RPCSX_initialize(JNIEnv *env, jobject, jstring rootDir) {
   }
 
   logs::stored_message ver{rpcsx_android.always()};
-  ver.text = fmt::format("RPCSX-ps3-android v%s", rpcs3::get_verbose_version());
+  ver.text = fmt::format("RPCSX-ps3-android v%s", rx::getVersion().toString());
 
   // Write System information
   logs::stored_message sys{rpcsx_android.always()};
@@ -2619,4 +2620,9 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_net_rpcsx_RPCSX_supportsCustomDriverLoading(JNIEnv *env,
                                                  jobject instance) {
   return access("/dev/kgsl-3d0", F_OK) == 0;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_net_rpcsx_RPCSX_getVersion(JNIEnv *env, jobject) {
+  return wrap(env, rx::getVersion().toString());
 }
